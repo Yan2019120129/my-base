@@ -58,7 +58,7 @@ make dev    # 开发环境
 make test   # 测试环境
 ```
 
-发布包输出到 `build/`，文件名中包含 12 位时间戳和压缩包的完整 SHA-256，不再生成独立的 `.sha256` 文件：
+发布包输出到 `build/`，文件名中包含 12 位时间戳和压缩包的完整 SHA-256，不再生成独立的 `.sha256` 文件。每次打包成功后，同一环境的旧 ZIP 会被清理，每个环境只保留最新一个压缩包：
 
 ```text
 dist.<pro|dev|test>.<YYYYMMDDHHMM>.<64位SHA256>.zip
@@ -66,21 +66,39 @@ dist.<pro|dev|test>.<YYYYMMDDHHMM>.<64位SHA256>.zip
 
 例如 `dist.pro.202611010514.<SHA256>.zip`。ZIP 根目录直接包含 `index.html` 和 `assets/`，可以解压到任意部署目录。
 
-查看并解压最新的生产环境发布包：
+校验并解压对应环境最新的发布包：
 
 ```sh
 cd web
 
+make unpack        # 生产环境
+make unpack-dev    # 开发环境
+make unpack-test   # 测试环境
+```
+
+解压目录名与 ZIP 文件名一致，仅去掉 `.zip` 后缀。例如：
+
+```text
+build/dist.pro.202611010533.<SHA256>/
+├── assets/
+├── favicon.ico
+├── favicon.svg
+├── index.html
+└── logo.jpeg
+```
+
+也可以手动查看并解压最新的生产环境发布包：
+
+```sh
 ZIP_FILE=$(find build -maxdepth 1 -type f -name 'dist.pro.*.zip' \
   -printf '%T@ %p\n' | sort -nr | head -n 1 | cut -d' ' -f2-)
 ZIP_NAME=$(basename "$ZIP_FILE" .zip)
-PACKAGE_NAME=${ZIP_NAME%.*}
 
 unzip -l "$ZIP_FILE"
-unzip -o "$ZIP_FILE" -d "build/$PACKAGE_NAME"
+unzip -o "$ZIP_FILE" -d "build/$ZIP_NAME"
 ```
 
-解压后的文件位于 `build/$PACKAGE_NAME/`，该目录根部就是 `index.html` 和 `assets/`。
+解压后的文件位于 `build/$ZIP_NAME/`，该目录根部就是 `index.html` 和 `assets/`。
 
 根据文件名中的 SHA-256 校验压缩包：
 
