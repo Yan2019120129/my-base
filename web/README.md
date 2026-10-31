@@ -51,6 +51,7 @@ pnpm build:test
 | --- | --- | --- |
 | `VITE_APP_ENV` | 环境标识：`local`、`dev`、`test`、`prod` | 开发模式为 `local`，生产构建为 `prod` |
 | `VITE_ADMIN_URL` | 后台工作台入口 | `/admin` |
+| `VITE_SITE_URL` | 首页 canonical、`og:url` 和 `og:image` 使用的站点基础地址，不带结尾斜杠 | 无 |
 | `VITE_API_BASE_URL` | 后台 API 根地址，包含 `/admin` | `/admin` |
 | `VITE_LOGIN_URL` | 后台登录入口 | `/admin/login` |
 | `VITE_TUS_ENDPOINT` | tus 断点续传地址 | `/admin/files/tus/` |
@@ -58,5 +59,7 @@ pnpm build:test
 | `VITE_REQUEST_TIMEOUT` | 请求超时毫秒数 | `15000` |
 
 完整模板见 `.env.example`。API 调用使用 `src/api/http.ts` 的 `apiRequest`，默认携带登录 Cookie 并处理超时和错误响应。
+
+`VITE_SITE_URL` 在构建时写入 `index.html`，因此不同环境需要使用对应的构建命令。本机默认地址为 `http://localhost:5173`；如果 Vite 自动切换端口，请同步修改 `.env.local` 中的该变量。
 
 > 当前后台尚未配置 CORS。前端跨域请求后台 API 前，需要后台允许对应环境的前端来源并支持携带凭据的请求。

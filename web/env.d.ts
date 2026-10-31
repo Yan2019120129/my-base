@@ -7,6 +7,9 @@ interface ImportMetaEnv {
   /** 工作台入口地址，未设置时使用同源 /admin。 */
   readonly VITE_ADMIN_URL?: string
 
+  /** 前台站点基础地址，不带结尾斜杠。 */
+  readonly VITE_SITE_URL?: string
+
   /** 后台 API 根地址，包含后台前缀 /admin。 */
   readonly VITE_API_BASE_URL?: string
 
