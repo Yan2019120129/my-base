@@ -45,6 +45,56 @@ pnpm build:test
 
 `pnpm build` 使用生产配置，`pnpm build:dev` 和 `pnpm build:test` 分别使用远程开发与测试配置。
 
+## 打包 Web
+
+所有打包命令都在 `web` 目录执行。打包流程会安装锁定依赖，并依次执行 lint、类型检查、构建和发布包校验。
+
+```sh
+cd web
+
+make        # 生产环境
+make prod   # 生产环境
+make dev    # 开发环境
+make test   # 测试环境
+```
+
+发布包输出到 `build/`，文件名中包含 12 位时间戳和压缩包的完整 SHA-256，不再生成独立的 `.sha256` 文件：
+
+```text
+dist.<pro|dev|test>.<YYYYMMDDHHMM>.<64位SHA256>.zip
+```
+
+例如 `dist.pro.202611010514.<SHA256>.zip`。ZIP 根目录直接包含 `index.html` 和 `assets/`，可以解压到任意部署目录。
+
+查看并解压最新的生产环境发布包：
+
+```sh
+cd web
+
+ZIP_FILE=$(find build -maxdepth 1 -type f -name 'dist.pro.*.zip' \
+  -printf '%T@ %p\n' | sort -nr | head -n 1 | cut -d' ' -f2-)
+ZIP_NAME=$(basename "$ZIP_FILE" .zip)
+PACKAGE_NAME=${ZIP_NAME%.*}
+
+unzip -l "$ZIP_FILE"
+unzip -o "$ZIP_FILE" -d "build/$PACKAGE_NAME"
+```
+
+解压后的文件位于 `build/$PACKAGE_NAME/`，该目录根部就是 `index.html` 和 `assets/`。
+
+根据文件名中的 SHA-256 校验压缩包：
+
+```sh
+ZIP_FILE=$(find build -maxdepth 1 -type f -name 'dist.pro.*.zip' \
+  -printf '%T@ %p\n' | sort -nr | head -n 1 | cut -d' ' -f2-)
+ZIP_NAME=$(basename "$ZIP_FILE" .zip)
+EXPECTED_SHA256=${ZIP_NAME##*.}
+ACTUAL_SHA256=$(sha256sum "$ZIP_FILE" | awk '{print $1}')
+
+test "$EXPECTED_SHA256" = "$ACTUAL_SHA256" \
+  && echo "SHA-256 校验通过"
+```
+
 ## 环境变量
 
 | 变量 | 说明 | 默认值 |
