@@ -37,3 +37,10 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# 可提交的环境配置；.env.local 继续由 *.local 忽略
+!/.env.example
+!/.env.development
+!/.env.dev
+!/.env.test
+!/.env.production
