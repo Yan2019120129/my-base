@@ -57,6 +57,7 @@ func StartServer() {
 	})
 
 	r.Static(cfg.Admin.AssetRootPath, cfg.Admin.Store.Path)
+	r.Static("/assets/home", "./website/public/home")
 
 	router.InitRouter(r, router.AdminAuthMiddleware)
 	if tusServer != nil {
