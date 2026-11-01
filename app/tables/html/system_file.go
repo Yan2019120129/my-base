@@ -28,6 +28,9 @@ func (s *SystemFile) Status(value string) template.HTML {
 
 func (s *SystemFile) Preview(publicURL string, mimeType interface{}) template.HTML {
 	url := template.HTMLEscapeString(publicURL)
+	if url == "" {
+		return template.HTML(`<span class="text-muted">无文件</span>`)
+	}
 	mime := fmt.Sprint(mimeType)
 	if strings.HasPrefix(mime, "image/") {
 		return template.HTML(`<a href="` + url + `" target="_blank"><img src="` + url + `" style="max-width:80px;max-height:80px;object-fit:contain;border:1px solid #eee" /></a>`)

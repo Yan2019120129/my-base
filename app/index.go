@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -56,7 +57,10 @@ func StartServer() {
 		c.Set(code.ContextDBKey, conn)
 	})
 
-	r.Static(cfg.Admin.AssetRootPath, cfg.Admin.Store.Path)
+	// 上传目录必须通过公开的存储前缀访问，而不是管理后台的资源根目录。
+	if storePrefix := strings.Trim(cfg.Admin.Store.Prefix, "/"); storePrefix != "" {
+		r.Static("/"+storePrefix, cfg.Admin.Store.Path)
+	}
 
 	router.InitRouter(r, router.AdminAuthMiddleware)
 	if tusServer != nil {

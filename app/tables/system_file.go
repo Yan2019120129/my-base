@@ -33,10 +33,10 @@ func GetSystemFileTable(ctx *context.Context) table.Table {
 	info.AddField("Id", "id", db.Bigint).
 		FieldWidth(50).
 		FieldFilterable()
-	info.AddField("预览", "storage_path", db.Varchar).
+	info.AddField("预览", "public_url", db.Varchar).
 		FieldWidth(120).
 		FieldDisplay(func(value types.FieldModel) interface{} {
-			return systemFileHTML.Preview(fmt.Sprint(value.Row["public_url"]), value.Row["mime_type"])
+			return systemFileHTML.Preview(value.Value, value.Row["mime_type"])
 		})
 	info.AddField("原始文件名", "original_name", db.Varchar).
 		FieldWidth(150).
