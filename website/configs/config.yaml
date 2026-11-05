@@ -121,7 +121,7 @@ admin:
   # 后台管理系统迷你Logo
   mini_logo: "<b>G</b>A"
   # 登录后重定向的主页URL
-  index: "/"
+  index: "/admin"
   # 登录页面URL
   login_url: "/login"
   # 是否启用调试模式

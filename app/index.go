@@ -18,10 +18,12 @@ import (
 	"syscall"
 	"time"
 
+	adminContext "github.com/GoAdminGroup/go-admin/context"
 	"github.com/GoAdminGroup/go-admin/engine"
 	"github.com/GoAdminGroup/go-admin/modules/logger"
 	"github.com/GoAdminGroup/go-admin/template"
 	"github.com/GoAdminGroup/go-admin/template/chartjs"
+	"github.com/GoAdminGroup/go-admin/template/types"
 	"github.com/gin-gonic/gin"
 )
 
@@ -68,7 +70,10 @@ func StartServer() {
 		r.StaticFile("/assets/vendor/tus.min.js", "./website/public/vendor/tus-js-client/tus.min.js")
 	}
 
-	eng.HTML("GET", cfg.Admin.Prefix(), pages.GetDashBoard)
+	// 仪表盘使用后台已经初始化的数据库连接池。
+	eng.HTML("GET", cfg.Admin.Prefix(), func(ctx *adminContext.Context) (types.Panel, error) {
+		return pages.GetDashBoard(ctx, conn)
+	})
 
 	taskCtx, stopTasks := context.WithCancel(context.Background())
 	taskRunner, err := tasks.Start(taskCtx, conn)
