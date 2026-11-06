@@ -136,6 +136,8 @@ admin:
   access_log: "./website/logs/access.log"
   # 会话生命周期（秒）
   session_life_time: 7200
+  # 是否允许多端同时在线（true 表示同一账号可在多个设备同时登录，互不挤下线）
+  no_limit_login_ip: true
   file_upload_engine:
     # 文件上传引擎
     name: "local"
