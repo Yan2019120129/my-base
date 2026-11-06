@@ -97,7 +97,9 @@ func (e SystemFileShare) CreateShare(ctx *gin.Context) {
 		e.Error(http.StatusInternalServerError, err, err.Error())
 		return
 	}
-	e.OK(e.shareItem(ctx, *share), "创建成功")
+	result := e.shareItem(ctx, *share)
+	result.OriginalName = item.OriginalName
+	e.OK(result, "创建成功")
 }
 
 // RevokeShare 撤销指定文件的分享链接。

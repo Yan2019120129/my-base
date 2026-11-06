@@ -411,6 +411,23 @@ func (s *SystemFile) ShareModal() template.HTML {
 	line-height: 1.5;
 }
 
+/* 命令单行横向滚动，固定名称与复制按钮。 */
+#system-file-share-modal .share-methods { margin-top:24px; }
+#system-file-share-modal .share-methods h4 { font-size:16px; font-weight:600; margin-bottom:14px; }
+#system-file-share-modal .share-method-row { display:grid; grid-template-columns:26px 80px minmax(0,1fr) auto; gap:8px; align-items:center; padding:8px; margin-bottom:8px; border:1px solid #dce4ef; border-radius:10px; background:#f8fafc; }
+#system-file-share-modal .share-method-icon { display:flex; align-items:center; justify-content:center; height:28px; border-radius:7px; background:#edf3ff; color:#2563eb; font-size:16px; }
+#system-file-share-modal .share-method-description strong { display:block; color:#475467; font-size:12px; white-space:nowrap; }
+#system-file-share-modal .share-command { display:block; min-width:0; padding:8px; border:1px solid #dce4ef; border-radius:7px; background:#f8fafc; color:#475467; font-size:12px; white-space:pre; overflow-x:auto; overflow-wrap:normal; word-break:normal; }
+/* 隐藏滚动条，保留触控及键盘横向滚动能力。 */
+#system-file-share-modal .share-command { scrollbar-width:none; -ms-overflow-style:none; }
+#system-file-share-modal .share-command::-webkit-scrollbar { display:none; }
+#system-file-share-modal .share-command:focus { outline:2px solid #77a9f8; outline-offset:1px; }
+#system-file-share-modal .share-command-copy { padding:6px 8px; border-color:#dce4ef; border-radius:7px; color:#475467; white-space:nowrap; }
+@media(max-width:480px) {
+#system-file-share-modal .share-method-row { grid-template-columns:76px minmax(0,1fr) auto; gap:5px; padding:6px; }
+#system-file-share-modal .share-method-icon { display:none; }
+}
+
 /* 移动端 */
 @media (max-width: 767px) {
 	#system-file-share-modal .modal-dialog {
@@ -557,6 +574,11 @@ func (s *SystemFile) ShareModal() template.HTML {
           </div>
         </div>
 
+<section class="share-methods" style="display:none" aria-label="下载方式"><h4>下载方式</h4>
+<div class="share-method-row" data-method="curl"><span class="share-method-icon" aria-hidden="true"><i class="fa fa-terminal"></i></span><div class="share-method-description"><strong>curl 命令</strong></div><code tabindex="0" class="share-command" aria-label="curl 命令下载命令"></code><button type="button" class="btn btn-default share-command-copy" aria-label="复制curl 命令"><i class="fa fa-copy" aria-hidden="true"></i> 复制</button></div>
+<div class="share-method-row" data-method="wget"><span class="share-method-icon" aria-hidden="true"><i class="fa fa-download"></i></span><div class="share-method-description"><strong>wget 命令</strong></div><code tabindex="0" class="share-command" aria-label="wget 命令下载命令"></code><button type="button" class="btn btn-default share-command-copy" aria-label="复制wget 命令"><i class="fa fa-copy" aria-hidden="true"></i> 复制</button></div>
+<div class="share-method-row" data-method="powershell"><span class="share-method-icon" aria-hidden="true"><i class="fa fa-windows"></i></span><div class="share-method-description"><strong>PowerShell</strong></div><code tabindex="0" class="share-command" aria-label="Windows（PowerShell）下载命令"></code><button type="button" class="btn btn-default share-command-copy" aria-label="复制Windows（PowerShell）"><i class="fa fa-copy" aria-hidden="true"></i> 复制</button></div>
+</section>
         <div
           class="alert alert-success system-file-share-notice"
           role="status"
@@ -613,14 +635,40 @@ func (s *SystemFile) ShareModal() template.HTML {
   }
 
   function resetShareResult() {
+    modal.find('.share-methods').hide();
+    modal.find('.share-command').text('');
+    modal.removeData('original-name');
     modal.find('.system-file-share-link').val('');
     modal.find('.system-file-share-result').hide();
   }
 
-  function showShareResult(link) {
+  function showShareResult(link, name) {
     modal.find('.system-file-share-link').val(link);
-    modal.find('.system-file-share-result').show();
+    modal.data('original-name', name || 'download');
+    modal.find('.system-file-share-result, .share-methods').show();
+    updateDownloadCommand();
   }
+
+  // 各行使用对应终端的参数转义规则，复用当前分享链接。
+  function updateDownloadCommand() {
+    var name = String(modal.data('original-name') || 'download').replace(/[\x00-\x1f\x7f<>:"/\\|?*]/g, '_').replace(/[. ]+$/, '') || 'download';
+    if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(name)) name = '_' + name;
+    modal.find('.share-method-row').each(function () {
+      var row = $(this), method = row.data('method');
+      var quote = function (v) { return "'" + v.replace(/'/g, method === 'powershell' ? "''" : "'\\''") + "'"; };
+      var url = quote(modal.find('.system-file-share-link').val());
+      var command = method === 'curl' ? 'curl -fL ' + url + ' -o ' + quote(name)
+        : method === 'wget' ? 'wget -O ' + quote(name) + ' -- ' + url
+        : 'Invoke-WebRequest -Uri ' + url + ' -OutFile ' + quote(name);
+      row.find('.share-command').text(command);
+    });
+  }
+  modal.off('click.systemFileShareCommand', '.share-command-copy')
+    .on('click.systemFileShareCommand', '.share-command-copy', function () {
+      var command = $(this).closest('.share-method-row').find('.share-command').text();
+      if (command) copyLink(command).then(function () { showNotice('下载命令已复制'); })
+        .catch(function () { window.prompt('请复制下载命令', command); });
+    });
 
   function showNotice(message) {
     var notice = modal.find('.system-file-share-notice');
@@ -666,7 +714,7 @@ func (s *SystemFile) ShareModal() template.HTML {
         return;
       }
 
-      showShareResult(response.data.downloadUrl);
+      showShareResult(response.data.downloadUrl, response.data.originalName);
     }).fail(function (response) {
       alert(errorMessage(response));
     }).always(function () {

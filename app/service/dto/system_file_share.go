@@ -52,10 +52,11 @@ type SystemFileShareDownloadInput struct {
 
 // SystemFileShareItem 定义文件分享记录的接口返回内容。
 type SystemFileShareItem struct {
-	Id          uint       `json:"id"`
-	DownloadURL string     `json:"downloadUrl"`
-	ExpiresAt   time.Time  `json:"expiresAt"`
-	RevokedAt   *time.Time `json:"revokedAt"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	Status      string     `json:"status"`
+	OriginalName string     `json:"originalName,omitempty"`
+	Id           uint       `json:"id"`
+	DownloadURL  string     `json:"downloadUrl"`
+	ExpiresAt    time.Time  `json:"expiresAt"`
+	RevokedAt    *time.Time `json:"revokedAt"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	Status       string     `json:"status"`
 }
