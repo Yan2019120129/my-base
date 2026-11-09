@@ -47,7 +47,9 @@ func (m *Manage) Create(db *gorm.DB, names ...string) error {
 
 	if len(tables) > 0 {
 		for _, v := range tables {
-			_ = db.Set("gorm:table_options", "COMMENT='"+v.comment+";'").AutoMigrate(v.model)
+			if err := db.Set("gorm:table_options", "COMMENT='"+v.comment+";'").AutoMigrate(v.model); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

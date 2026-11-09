@@ -14,6 +14,16 @@ tus_upload:
   # 未完成或未认领文件的保留时间
   retention: "24h"
 
+notification:
+  enabled: true
+  host: smtp.qq.com
+  port: 587
+  username: 1556403682@qq.com
+  password: "dlogwcjjuhfzhdce" # 推荐使用 SMTP_PASSWORD 环境变量覆盖
+  from: 1556403682@qq.com
+  tls_mode: tls # 465 常用 tls；587 常用 starttls，以邮件服务商要求为准
+  timeout_seconds: 15
+
 gorm:
   # 是否启用全字段查询
   query-fields: true

@@ -18,10 +18,11 @@ var (
 
 // Config 服务配置
 type Config struct {
-	Port      string           `yaml:"port"`       // 服务端口
-	Admin     *config.Config   `yaml:"admin"`      // 管理配置信息
-	Gorm      *gorm.Config     `yaml:"gorm"`       // gorm 配置
-	TusUpload *TusUploadConfig `yaml:"tus_upload"` // 断点续传配置
+	Notification *NotificationConfig `yaml:"notification"`
+	Port         string              `yaml:"port"`       // 服务端口
+	Admin        *config.Config      `yaml:"admin"`      // 管理配置信息
+	Gorm         *gorm.Config        `yaml:"gorm"`       // gorm 配置
+	TusUpload    *TusUploadConfig    `yaml:"tus_upload"` // 断点续传配置
 }
 
 // TusUploadConfig 定义 tus 断点续传服务配置。

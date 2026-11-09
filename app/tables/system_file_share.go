@@ -76,7 +76,7 @@ func GetSystemFileShareTable(ctx *context.Context) table.Table {
 	formList.AddField("ID", "id", db.Bigint, form.Default).FieldDisableWhenCreate()
 	formList.AddField("系统文件", "system_file_id", db.Bigint, form.SelectSingle).
 		FieldOptionsFromTable("system_files", "original_name", "id", systemFileShareFileOptionsQuery(user.IsSuperAdmin())).
-		FieldDisplayButCanNotEditWhenUpdate()
+		FieldOptionExt(map[string]interface{}{"minimumResultsForSearch": 0, "tags": false}).FieldDisplayButCanNotEditWhenUpdate()
 	formList.AddField("分享时长", "duration_hours", db.Int, form.SelectSingle).
 		FieldOptions(systemFileShareDurationOptions()).
 		FieldDisableWhenUpdate()

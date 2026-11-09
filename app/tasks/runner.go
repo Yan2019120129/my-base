@@ -74,7 +74,13 @@ func Start(ctx context.Context, conn adminDB.Connection) (*Runner, error) {
 		return nil, err
 	}
 
+	notificationJob, err := systemNotificationJob(db)
+	if err != nil {
+		return nil, err
+	}
 	runner := NewRunner(
+		systemPlanJob(db),
+		notificationJob,
 		heartbeatJob(),
 		testTableMonitorJob(db),
 		tusUploadCleanupJob(db),
