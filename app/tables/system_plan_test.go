@@ -58,15 +58,24 @@ func TestSystemPlanDetailScope(t *testing.T) {
 
 // TestSystemPlanTimeRoundTrip 验证上海输入按 UTC 保存并能正确回显。
 func TestSystemPlanTimeRoundTrip(t *testing.T) {
-	value, err := parseSystemPlanTime("2026-11-10 09:30:00")
-	if err != nil {
-		t.Fatal(err)
+	for _, input := range []string{"2026-11-10 09:30:00", "2026-11-10 09:30", "2026-11-10T09:30", "2026-11-10T09:30:00", "2026-11-10T09:30:00+08:00", "2026-11-10T01:30:00Z"} {
+		t.Run(input, func(t *testing.T) {
+			value, err := parseSystemPlanTime(input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if value.Format(time.RFC3339) != "2026-11-10T01:30:00Z" {
+				t.Fatal(value)
+			}
+			shown := displaySystemPlanTime(types.FieldModel{Value: value.Format(time.RFC3339)})
+			if shown != "2026-11-10 09:30:00" {
+				t.Fatal(shown)
+			}
+		})
 	}
-	if value.Format(time.RFC3339) != "2026-11-10T01:30:00Z" {
-		t.Fatal(value)
-	}
-	shown := displaySystemPlanTime(types.FieldModel{Value: value.Format(time.RFC3339)})
-	if shown != "2026-11-10 09:30:00" {
-		t.Fatal(shown)
+	for _, input := range []string{"", "2026-02-30T09:30", "2026-11-10T25:30"} {
+		if _, err := parseSystemPlanTime(input); err == nil {
+			t.Fatalf("不应接受无效时间 %q", input)
+		}
 	}
 }

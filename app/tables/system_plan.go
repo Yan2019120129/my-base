@@ -92,8 +92,11 @@ func GetSystemPlanTable(ctx *context.Context) table.Table {
 	}
 	domains, _ := json.Marshal(configs.GetAllowedRecipientDomains())
 	f.AddField("接收邮箱", "recipient", db.Varchar, form.Text).FieldHelpMsg("目前仅支持配置中的邮箱后缀，默认 @qq.com").FieldCustomJs(template.JS(strings.ReplaceAll(planRecipientScript, "__DOMAINS__", string(domains))))
-	f.AddField("执行时间（上海）", "execute_at", db.Datetime, form.Datetime).FieldDisplay(displaySystemPlanTime)
-	f.AddField("操作", "action", db.Varchar, form.SelectSingle).FieldOptions(types.FieldOptions{{Text: "保存修改", Value: "save"}, {Text: "确认完成", Value: "completed"}, {Text: "取消计划", Value: "cancelled"}}).FieldDefault("save").FieldDisableWhenCreate()
+	f.AddField("执行时间（上海）", "execute_at", db.Datetime, form.Text).FieldDisplay(displaySystemPlanTime).FieldHelpMsg("按上海时间选择，可直接输入日期和时间，也可使用快捷按钮").FieldCustomJs(template.JS(planTimeScript))
+	f.AddField("操作", "action", db.Varchar, form.SelectSingle).FieldOptions(types.FieldOptions{{Text: "保存修改", Value: "save"}, {Text: "确认完成", Value: "completed"}, {Text: "取消计划", Value: "cancelled"}}).FieldDefault("save").FieldDisplay(func(types.FieldModel) interface{} {
+		// 操作为非持久化字段，编辑回显时也必须显式选中保存。
+		return "save"
+	}).FieldDisableWhenCreate()
 	f.SetTable("system_plans").SetTitle("计划管理").SetDescription("邮箱由计划指定；执行时间使用 Asia/Shanghai")
 	f.SetInsertFnWithDB(func(db *gorm.DB, v values.Values) error {
 		in := dto.SystemPlanInput{UserID: user.Id, IsSuperAdmin: user.IsSuperAdmin(), Title: v.Get("title"), Content: v.Get("content"), Recipient: v.Get("recipient"), AssigneeID: int64(v.GetIntDefault("assignee_id", int(user.Id)))}
@@ -115,7 +118,8 @@ func GetSystemPlanTable(ctx *context.Context) table.Table {
 		if in.Action == "completed" || in.Action == "cancelled" {
 			return s.Transition(&in)
 		}
-		if in.Action != "save" {
+		// 未选择操作的旧表单按保存处理，未知操作仍然拒绝。
+		if in.Action != "" && in.Action != "save" {
 			return errors.New("无效的操作")
 		}
 		due, err := parseSystemPlanTime(v.Get("execute_at"))
@@ -134,7 +138,7 @@ func parseSystemPlanTime(value string) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	for _, layout := range []string{time.RFC3339Nano, time.DateTime, "2006-01-02 15:04"} {
+	for _, layout := range []string{time.RFC3339Nano, time.DateTime, "2006-01-02 15:04", "2006-01-02T15:04:05", "2006-01-02T15:04"} {
 		if value, err := time.ParseInLocation(layout, strings.TrimSpace(value), location); err == nil {
 			return value.UTC(), nil
 		}
@@ -165,6 +169,27 @@ func displaySystemPlanTime(v types.FieldModel) interface{} {
 	}
 	return parsed.In(location).Format(time.DateTime)
 }
+
+// planTimeScript 使用原生日期时间选择器，并按上海时区提供相对当前时间的快捷选项。
+const planTimeScript = `
+(function(){
+ var input=document.querySelector('input[name="execute_at"]');
+ if(!input || input.dataset.enhanced) return;
+ input.dataset.enhanced='1';
+ var old=input.value;
+ input.type='datetime-local';input.step='1';
+ input.value=old==='-'?'':old.replace(' ','T');
+ var shortcuts=document.createElement('div');shortcuts.style.marginTop='8px';
+ [{label:'10分钟后',minutes:10},{label:'1小时后',minutes:60},{label:'24小时后',minutes:1440}].forEach(function(option){
+  var button=document.createElement('button');button.type='button';button.className='btn btn-default btn-sm';
+  button.textContent=option.label;button.style.marginRight='8px';
+  button.addEventListener('click',function(){
+   // 固定偏移到上海时间，避免浏览器所在时区影响快捷选择。
+   input.value=new Date(Date.now()+option.minutes*60000+8*3600000).toISOString().slice(0,19);
+   input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));
+  });shortcuts.appendChild(button);
+ });input.after(shortcuts);
+})();`
 
 // planRecipientScript 将邮箱账号与固定后缀组合，状态操作不受邮箱校验影响。
 const planRecipientScript = `

@@ -21,7 +21,7 @@ notification:
   username: 1556403682@qq.com
   password: "dlogwcjjuhfzhdce" # 推荐使用 SMTP_PASSWORD 环境变量覆盖
   from: 1556403682@qq.com
-  tls_mode: tls # 465 常用 tls；587 常用 starttls，以邮件服务商要求为准
+  tls_mode: starttls # 465 常用 tls；587 常用 starttls，以邮件服务商要求为准
   timeout_seconds: 15
 
 gorm:
